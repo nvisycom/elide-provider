@@ -386,7 +386,7 @@ dependencies = [
 [[package]]
 name = "elide-core"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#0eb6f34fd879b8e2b12ab19ae49aff022d0e5c18"
+source = "git+https://github.com/nvisycom/elide?branch=main#d69439f11c0b5de6c4d750266a6fc9c48c942ed6"
 dependencies = [
  "async-trait",
  "blake3",
@@ -416,7 +416,7 @@ dependencies = [
 [[package]]
 name = "elide-ner"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#0eb6f34fd879b8e2b12ab19ae49aff022d0e5c18"
+source = "git+https://github.com/nvisycom/elide?branch=main#d69439f11c0b5de6c4d750266a6fc9c48c942ed6"
 dependencies = [
  "async-trait",
  "derive_builder",
@@ -429,7 +429,7 @@ dependencies = [
 [[package]]
 name = "elide-ocr"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#0eb6f34fd879b8e2b12ab19ae49aff022d0e5c18"
+source = "git+https://github.com/nvisycom/elide?branch=main#d69439f11c0b5de6c4d750266a6fc9c48c942ed6"
 dependencies = [
  "async-trait",
  "derive_builder",
@@ -441,7 +441,7 @@ dependencies = [
 [[package]]
 name = "elide-stt"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#0eb6f34fd879b8e2b12ab19ae49aff022d0e5c18"
+source = "git+https://github.com/nvisycom/elide?branch=main#d69439f11c0b5de6c4d750266a6fc9c48c942ed6"
 dependencies = [
  "async-trait",
  "derive_builder",
@@ -878,10 +878,12 @@ dependencies = [
  "jiff-core",
  "jiff-static",
  "jiff-tzdb-platform",
+ "js-sys",
  "log",
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
+ "wasm-bindgen",
  "windows-link",
 ]
 
