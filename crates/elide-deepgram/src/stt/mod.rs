@@ -26,8 +26,7 @@ use crate::error::DeepgramBackendError;
 /// your infrastructure before anything is redacted — personal data, and
 /// biometric data under GDPR Article 4(14) where it is processed to
 /// identify or authenticate a speaker. Whether that is acceptable is a
-/// deployment policy
-/// question, not a technical one; see the crate README.
+/// deployment policy question, not a technical one; see the crate README.
 ///
 /// # Diarization
 ///
