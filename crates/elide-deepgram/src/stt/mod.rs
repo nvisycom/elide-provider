@@ -22,16 +22,19 @@ use crate::error::DeepgramBackendError;
 /// # Where the audio goes
 ///
 /// Unlike the self-hosted backends, **this sends raw audio to a third
-/// party**. In a redaction pipeline that means un-redacted audio — voice
-/// being biometric personal data — leaves your infrastructure before
-/// anything is redacted. Whether that is acceptable is a deployment policy
+/// party**. In a redaction pipeline that means un-redacted audio leaves
+/// your infrastructure before anything is redacted — personal data, and
+/// biometric data under GDPR Article 4(14) where it is processed to
+/// identify or authenticate a speaker. Whether that is acceptable is a
+/// deployment policy
 /// question, not a technical one; see the crate README.
 ///
 /// # Diarization
 ///
-/// Off unless [`with_diarization`] is called. Deepgram labels speakers per
-/// **word** as well as per utterance, so a segment's label is the one
-/// Deepgram assigned the utterance as a whole.
+/// Off unless [`with_diarization`] is called. A segment carries the label
+/// Deepgram assigned its utterance. Deepgram also labels each word, but
+/// elide models speaker attribution on the segment alone, so those are
+/// dropped rather than surfaced.
 ///
 /// [`with_diarization`]: Self::with_diarization
 #[derive(Debug, Clone)]

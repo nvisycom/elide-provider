@@ -84,6 +84,11 @@ fn segment(utterance: Utterance) -> Option<TranscriptSegment> {
 }
 
 /// One word, or `None` when its span or text is unusable.
+///
+/// Deepgram also reports a per-word `speaker` when diarization is on, but
+/// elide models speaker attribution on [`TranscriptSegment`] alone —
+/// [`TranscriptWord`] has no such field — so it is dropped here. A word
+/// disagreeing with its own utterance's speaker is not representable.
 fn word(dto: Word) -> Option<TranscriptWord> {
     let text = dto.word.trim();
     if text.is_empty() {

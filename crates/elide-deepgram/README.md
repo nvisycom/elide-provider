@@ -31,8 +31,10 @@ elide's job, and a provider-redacted transcript would no longer match the
 audio whose offsets elide needs.
 
 **This backend sends raw audio to a third party.** In a redaction
-pipeline that means un-redacted audio — voice being biometric personal
-data under GDPR — leaves your infrastructure before anything is redacted;
+pipeline that means un-redacted audio — personal data, and biometric
+data under GDPR Article 4(14) where it is processed to identify or
+authenticate a speaker — leaves your infrastructure before anything is
+redacted;
 the self-hosted `bento-whisper` service exists so that does not have to
 happen. Deepgram offers a BAA on request, an explicit `mip_opt_out`
 parameter to keep submitted audio out of model training, and an EU
