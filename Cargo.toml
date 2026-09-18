@@ -4,6 +4,7 @@
 resolver = "3"
 members = [
     "./crates/elide-bentoml",
+    "./crates/elide-deepgram",
     "./crates/elide-gladia",
 ]
 # Python (uv) workspace lives in `packages/`. Excluded so cargo
@@ -58,3 +59,4 @@ bentoml = { version = "0.5", default-features = false, features = ["rustls-tls",
 
 # Speech-to-text providers without a BentoML service in front of them.
 gladia = { version = "0.1", default-features = false, features = ["rustls-tls"] }
+deepgram = { version = "0.10", default-features = false, features = ["listen"] }
