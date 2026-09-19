@@ -37,6 +37,12 @@ allow = [
     "BSL-1.0",
     "CC0-1.0",
     "Zlib",
+    # Community Data License Agreement — written for datasets rather than
+    # code, and used by webpki-roots for Mozilla's CA root store. The CDLA
+    # has two families: Sharing carries copyleft-style obligations,
+    # Permissive does not. This is the Permissive one, so nothing reaches
+    # our own source. https://cdla.dev/permissive-2-0/
+    "CDLA-Permissive-2.0",
 ]
 
 exceptions = [
