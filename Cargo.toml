@@ -6,6 +6,7 @@ members = [
     "./crates/elide-bentoml",
     "./crates/elide-deepgram",
     "./crates/elide-gladia",
+    "./crates/elide-pioneer",
 ]
 # Python (uv) workspace lives in `packages/`. Excluded so cargo
 # doesn't glob-scan it or complain about missing Cargo.toml files.
@@ -60,3 +61,6 @@ bentoml = { version = "0.5", default-features = false, features = ["rustls-tls",
 # Speech-to-text providers without a BentoML service in front of them.
 gladia = { version = "0.1", default-features = false, features = ["rustls-tls"] }
 deepgram = { version = "0.10", default-features = false, features = ["listen"] }
+
+# HTTP client for providers with no Rust SDK.
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
