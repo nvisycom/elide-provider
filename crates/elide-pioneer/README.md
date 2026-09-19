@@ -46,19 +46,31 @@ so this backend buys convenience rather than capability.
 Pioneer's own published terms make that a live concern. As of September
 2026, from their Trust & Safety documentation:
 
-| | |
+| | Their wording |
 |---|---|
-| Retention | Indefinite by default. A zero-retention mode exists but is scoped to "eligible use cases", which are not enumerated. |
-| Training | On by default. Opting out requires a paid plan, and their documentation states that "continuous adaptation and remediation training of your own task models" continues regardless. |
-| DPA | Not offered — stated as a current non-offering, not a sales question. |
-| SOC 2 / ISO 27001 | Both "in progress"; first audit expected around November 2026. |
+| Retention | "API inputs and outputs are retained indefinitely" by default, tiering "to colder storage over time but ... not automatically deleted". Per-request `store: false` gives "full zero-retention handling" — but only "for eligible use cases", which are not enumerated. |
+| Platform training | "Sometimes, by default. Unless you opt out, we may use inputs and outputs you send through the API to improve and train our models." The opt-out is an Enterprise setting. |
+| Task-model training | Separate, and not covered by that opt-out: inference data "is used for continuous adaptation and remediation training of your own task models ... regardless of the platform-training opt-out". |
+| DPA | "At this time, we do not offer a Data Processing Addendum (DPA)." |
+| SOC 2 / ISO 27001 | Both in progress; a report is expected around November 2026. |
 | HIPAA | No BAA documented at any tier. |
-| Sub-processors | 15, all US-based. The list includes OpenAI and Anthropic for "AI/ML services"; whether GLiNER2 calls specifically stay off that path is not documented. |
+| Sub-processors | 15, all US-based, list last updated July 2026. It includes OpenAI and Anthropic for AI/ML services; whether GLiNER2 calls specifically stay off that path is not documented. |
 
-There is, on the published terms, no way to stop submitted text from
-training something. For a de-identification product that is a decision to
-take deliberately, not a default to inherit — and the terms are worth
-confirming directly rather than from this table, which will age.
+Two controls do exist, so this is a configuration decision rather than a
+flat no: `store: false` per request, if your use case is eligible, and
+the Enterprise platform-training opt-out. Neither reaches the task-model
+training, which their own page says continues regardless — so on the
+published terms there is no documented way to stop submitted text from
+training anything at all.
+
+`with_zero_retention()` sends `store: false` on every request. It is off
+by default, so a deployment gets Pioneer's own behaviour unless it opts
+in, and it is a request rather than a guarantee: eligibility is theirs to
+decide, and it does not reach the task-model training above.
+
+For a de-identification product that is a decision to take deliberately.
+Confirm the terms directly rather than from this table: it was written
+against their Trust & Safety page in September 2026 and will age.
 
 An enterprise VPC deployment is mentioned in their materials but is
 sales-gated and undocumented. Since the model weights are already

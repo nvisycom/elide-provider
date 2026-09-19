@@ -6,6 +6,8 @@
 mod request;
 mod response;
 
+use std::fmt;
+
 use async_trait::async_trait;
 use elide_core::Result;
 use elide_core::entity::audit::ModelEvent;
@@ -50,12 +52,29 @@ const DEFAULT_THRESHOLD: f32 = 0.5;
 /// README before pointing this at production text.
 ///
 /// [`NerBackend`]: elide_ner::backend::NerBackend
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PioneerNer {
     http: reqwest::Client,
     base_url: String,
     api_key: String,
     threshold: f32,
+    zero_retention: bool,
+}
+
+/// Hand-written so the API key cannot reach a log or a panic message.
+///
+/// The derived implementation would print it verbatim, and a backend is
+/// exactly the kind of value that ends up in a `tracing` field or an
+/// `unwrap` diagnostic.
+impl fmt::Debug for PioneerNer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PioneerNer")
+            .field("base_url", &self.base_url)
+            .field("api_key", &"<redacted>")
+            .field("threshold", &self.threshold)
+            .field("zero_retention", &self.zero_retention)
+            .finish_non_exhaustive()
+    }
 }
 
 impl PioneerNer {
@@ -86,6 +105,7 @@ impl PioneerNer {
             base_url: base_url.into().trim_end_matches('/').to_owned(),
             api_key: api_key.into(),
             threshold: DEFAULT_THRESHOLD,
+            zero_retention: false,
         })
     }
 
@@ -93,6 +113,21 @@ impl PioneerNer {
     #[must_use]
     pub fn with_threshold(mut self, threshold: f32) -> Self {
         self.threshold = threshold;
+        self
+    }
+
+    /// Send `store: false`, asking Pioneer not to persist the request or
+    /// its response.
+    ///
+    /// Off by default, so a deployment gets Pioneer's own behaviour unless
+    /// it opts in. Their documentation scopes zero-retention to "eligible
+    /// use cases" without saying which, and it does not cover the
+    /// task-model training their Trust & Safety page describes as
+    /// continuing regardless — so treat this as a request rather than a
+    /// guarantee, and see the crate README.
+    #[must_use]
+    pub fn with_zero_retention(mut self) -> Self {
+        self.zero_retention = true;
         self
     }
 }
@@ -127,7 +162,7 @@ impl NerBackend for PioneerNer {
             return Ok(NerResponse::new(Vec::new()));
         }
 
-        let body = WireRequest::new(request.text, labels, self.threshold);
+        let body = WireRequest::new(request.text, labels, self.threshold, self.zero_retention);
         let response = self
             .http
             .post(format!("{}/{ROUTE}", self.base_url))
@@ -155,5 +190,23 @@ impl NerBackend for PioneerNer {
         })?;
 
         Ok(wire.decode(request.text))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The API key must not reach a log line or a panic message.
+    ///
+    /// Pinned because the fix is a hand-written `Debug`: re-deriving it
+    /// would silently print the credential again.
+    #[test]
+    fn debug_redacts_the_api_key() {
+        let backend = PioneerNer::new("pio_sk_secret_value").expect("client");
+        let rendered = format!("{backend:?}");
+
+        assert!(!rendered.contains("pio_sk_secret_value"));
+        assert!(rendered.contains("<redacted>"));
     }
 }
