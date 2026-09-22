@@ -35,8 +35,8 @@ documentation = "https://github.com/nvisycom/elide-provider/tree/main/crates/eli
 # Elide crates
 elide-core = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
 elide-ner = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
-elide-ocr = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
-elide-stt = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
+elide-audio = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
+elide-image = { git = "https://github.com/nvisycom/elide", branch = "main", default-features = false }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
