@@ -3,6 +3,7 @@
 //!
 //! [`SttBackend`]: elide_audio::stt::SttBackend
 
+mod audio;
 mod request;
 mod response;
 
@@ -119,10 +120,10 @@ impl SttBackend for GladiaStt {
     }
 
     async fn transcribe(&self, request: SttRequest<'_>) -> Result<SttResponse> {
-        // Gladia detects the container from the upload's filename. elide's
-        // `SttRequest` no longer carries one, so this is a bare label and
-        // Gladia sniffs the bytes instead.
-        let filename = "audio".to_owned();
+        // Gladia dispatches on the filename's extension, so the upload
+        // needs one; the request carries only bytes, so it comes from
+        // their magic number.
+        let filename = self::audio::upload_filename(request.audio).to_owned();
         let audio = request.audio.to_vec();
         let diarize = self.diarize;
         let diarization = self.diarization.clone();
