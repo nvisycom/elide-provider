@@ -624,7 +624,7 @@ checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
 [[package]]
 name = "elide-audio"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#33dbcad8b9eb25744483cf470ef4edfd5f8b1daa"
+source = "git+https://github.com/nvisycom/elide?branch=main#9ff30002b47818488167b09f18102835a421c7ba"
 dependencies = [
  "async-trait",
  "bytes",
@@ -655,7 +655,7 @@ dependencies = [
 [[package]]
 name = "elide-core"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#33dbcad8b9eb25744483cf470ef4edfd5f8b1daa"
+source = "git+https://github.com/nvisycom/elide?branch=main#9ff30002b47818488167b09f18102835a421c7ba"
 dependencies = [
  "async-trait",
  "blake3",
@@ -696,7 +696,7 @@ dependencies = [
 [[package]]
 name = "elide-image"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#33dbcad8b9eb25744483cf470ef4edfd5f8b1daa"
+source = "git+https://github.com/nvisycom/elide?branch=main#9ff30002b47818488167b09f18102835a421c7ba"
 dependencies = [
  "async-trait",
  "bytes",
@@ -711,7 +711,7 @@ dependencies = [
 [[package]]
 name = "elide-ner"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#33dbcad8b9eb25744483cf470ef4edfd5f8b1daa"
+source = "git+https://github.com/nvisycom/elide?branch=main#9ff30002b47818488167b09f18102835a421c7ba"
 dependencies = [
  "async-trait",
  "derive_builder",
@@ -762,7 +762,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2093,7 +2093,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2475,7 +2475,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3368,7 +3368,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]

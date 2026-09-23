@@ -119,9 +119,10 @@ impl SttBackend for GladiaStt {
     }
 
     async fn transcribe(&self, request: SttRequest<'_>) -> Result<SttResponse> {
-        // Gladia detects the container from the upload's filename, so a
-        // caller-supplied name is forwarded; the fallback is only a label.
-        let filename = request.filename.unwrap_or("audio").to_owned();
+        // Gladia detects the container from the upload's filename. elide's
+        // `SttRequest` no longer carries one, so this is a bare label and
+        // Gladia sniffs the bytes instead.
+        let filename = "audio".to_owned();
         let audio = request.audio.to_vec();
         let diarize = self.diarize;
         let diarization = self.diarization.clone();
