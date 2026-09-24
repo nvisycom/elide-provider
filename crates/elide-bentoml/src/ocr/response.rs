@@ -1,16 +1,17 @@
 //! Incoming wire types for the OCR `/recognize` endpoint.
 //!
 //! Mirrors `bento_core.ocr.v1.OcrResponse` from the inference
-//! repository. The full upstream tree is
-//! `Page -> Block -> Line -> Word`; elide's vocabulary collapses
-//! lines into the parent block — [`WireOcrResponse::decode`]
-//! flattens every word under its grandparent block. The
-//! response-level `modelId`,
-//! per-page `width`/`height`, per-block `kind`, and any rotated
-//! polygons are deserialised-and-discarded for now.
+//! repository. The wire tree is `Page -> Block -> Line -> Word`;
+//! elide's [`Layout`] is a flat list of regions, so
+//! [`WireOcrResponse::decode`] keeps the words and discards the
+//! groupings above them. The response-level `modelId`, per-page
+//! `width`/`height`, per-block `kind`, and any rotated polygons are
+//! deserialised-and-discarded for now.
+//!
+//! [`Layout`]: elide_image::modality::Layout
 
 use elide_core::primitive::Confidence;
-use elide_image::modality::{ImageLocation, LayoutBlock, LayoutWord};
+use elide_image::modality::{ImageLocation, LayoutRegion};
 use elide_image::ocr::OcrResponse;
 use elide_image::primitive::{BoundingBox, Point};
 use serde::Deserialize;
@@ -39,13 +40,12 @@ pub(super) struct WirePage {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct WireBlock {
-    pub text: String,
-    pub bbox: WireBoundingBox,
     #[serde(default)]
     pub lines: Vec<WireLine>,
-    // `kind` (text / table / figure / other) ignored: elide's
-    // `LayoutBlock` does not yet model block kind. When upstream
-    // grows it, surface here.
+    // `text`, `bbox` and `kind` (text / table / figure / other) are
+    // deserialised-and-discarded: `Layout` is a flat list of regions, so
+    // the block is a grouping the wire has and elide does not. Its words
+    // carry the geometry and the confidence that survive.
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,9 +53,8 @@ pub(super) struct WireBlock {
 pub(super) struct WireLine {
     #[serde(default)]
     pub words: Vec<WireWord>,
-    // Per-line text + bbox are subsumed by the block's text + the
-    // per-word geometry; elide does not model the intermediate line
-    // layer today.
+    // Per-line text and bbox are discarded for the same reason as the
+    // block's: the words beneath carry both.
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,8 +63,9 @@ pub(super) struct WireWord {
     pub text: String,
     pub confidence: Option<f32>,
     pub bbox: WireBoundingBox,
-    // `polygon` ignored: rotated regions land on a future
-    // `LayoutWord::polygon` field once elide grows one.
+    // `polygon` ignored: `ImageLocation` has a `polygon` field, but the
+    // service reports one only for rotated regions, and nothing here
+    // requests that mode yet.
 }
 
 #[derive(Debug, Deserialize)]
@@ -87,50 +87,40 @@ impl From<WireBoundingBox> for BoundingBox<f64> {
 }
 
 impl WireOcrResponse {
-    /// Translate into the elide [`OcrResponse`] the backend trait
-    /// expects. Flattens pages → blocks → words; every per-block
-    /// word becomes a [`LayoutWord`] on the resulting
-    /// [`LayoutBlock`].
+    /// Translate into the elide [`OcrResponse`] the backend trait expects.
+    ///
+    /// [`Layout`] is a flat list of regions, so the wire's
+    /// pages → blocks → lines → words nesting collapses into one. Words
+    /// are what survive: they are the finest granularity the service
+    /// reports, and the only level carrying a confidence, which a
+    /// redaction pipeline needs per span rather than per paragraph.
+    ///
+    /// [`Layout`]: elide_image::modality::Layout
     pub(super) fn decode(self) -> OcrResponse {
-        let blocks = self
+        let regions = self
             .pages
             .into_iter()
             .flat_map(|page| {
                 let page_number = page.page_number;
                 page.blocks
                     .into_iter()
-                    .map(move |block| block.decode(page_number))
+                    .flat_map(|block| block.lines)
+                    .flat_map(|line| line.words)
+                    .map(move |word| word.decode(page_number))
             })
             .collect();
-        OcrResponse::new(blocks)
-    }
-}
-
-impl WireBlock {
-    fn decode(self, page_number: Option<u32>) -> LayoutBlock {
-        let region = ImageLocation {
-            bounding_box: self.bbox.into(),
-            polygon: None,
-            page: page_number,
-        };
-        let words: Vec<LayoutWord> = self
-            .lines
-            .into_iter()
-            .flat_map(|line| line.words.into_iter())
-            .map(|word| word.decode(page_number))
-            .collect();
-        LayoutBlock::new(region, self.text).with_words(words)
+        OcrResponse::new(regions)
     }
 }
 
 impl WireWord {
-    fn decode(self, page_number: Option<u32>) -> LayoutWord {
+    fn decode(self, page_number: Option<u32>) -> LayoutRegion {
         let region = ImageLocation {
             bounding_box: self.bbox.into(),
             polygon: None,
             page: page_number,
         };
-        let mut layout = LayoutWord::new(region, self.text);
+        let mut layout = LayoutRegion::new(region, self.text);
         if let Some(c) = self.confidence {
             layout = layout.with_confidence(Confidence::clamped(c));
         }
