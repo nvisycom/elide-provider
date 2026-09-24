@@ -48,8 +48,13 @@ Speech-to-text, so audio reaches the same detection pipeline as text.
 **[elide-bentoml](crates/elide-bentoml)**  
 The Rust client for the services above, feature-gated per backend (`ner`, `ocr`, `stt`).
 
-**[elide-gladia](crates/elide-gladia)**  
-A Gladia-backed speech-to-text backend, for hosted transcription instead of self-hosted Whisper.
+**[elide-deepgram](crates/elide-deepgram)**  
+A Deepgram-backed speech-to-text backend, for hosted transcription instead of
+self-hosted Whisper.
+
+**[elide-pioneer](crates/elide-pioneer)**  
+A Pioneer-backed NER backend, running the same GLiNER2 model family as
+`bento-gliner2` without self-hosting it.
 
 ## Contract
 
