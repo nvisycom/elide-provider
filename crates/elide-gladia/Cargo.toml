@@ -36,6 +36,9 @@ hipstr = { workspace = true, features = [] }
 # Async runtime and parallelism
 async-trait = { workspace = true, features = [] }
 
+# File-type detection for the upload filename.
+infer = { workspace = true }
+
 # Speech-to-text provider
 gladia = { workspace = true }
 

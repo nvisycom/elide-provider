@@ -62,5 +62,8 @@ bentoml = { version = "0.5", default-features = false, features = ["rustls-tls",
 gladia = { version = "0.1", default-features = false, features = ["rustls-tls"] }
 deepgram = { version = "0.11", default-features = false, features = ["listen"] }
 
+# File-type detection from magic numbers.
+infer = { version = "0.22", default-features = false }
+
 # HTTP client for providers with no Rust SDK.
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
