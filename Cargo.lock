@@ -693,7 +693,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "elide-pioneer"
+name = "elide-pioneer-gliner"
 version = "0.1.0"
 dependencies = [
  "async-trait",
