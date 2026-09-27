@@ -52,7 +52,7 @@ The Rust client for the services above, feature-gated per backend (`ner`, `ocr`,
 A Deepgram-backed speech-to-text backend, for hosted transcription instead of
 self-hosted Whisper.
 
-**[elide-pioneer](crates/elide-pioneer)**  
+**[elide-pioneer-gliner](crates/elide-pioneer-gliner)**  
 A Pioneer-backed NER backend, running the same GLiNER2 model family as
 `bento-gliner2` without self-hosting it.
 

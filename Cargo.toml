@@ -5,7 +5,7 @@ resolver = "3"
 members = [
     "./crates/elide-bentoml",
     "./crates/elide-deepgram",
-    "./crates/elide-pioneer",
+    "./crates/elide-pioneer-gliner",
 ]
 # Python (uv) workspace lives in `packages/`. Excluded so cargo
 # doesn't glob-scan it or complain about missing Cargo.toml files.
