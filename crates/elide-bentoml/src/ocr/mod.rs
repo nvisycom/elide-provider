@@ -6,10 +6,10 @@
 //! confidence threshold) and returns the matching list of
 //! responses. Each response is a `Page -> Block -> Line -> Word`
 //! tree; elide's [`Layout`] is a flat list of [`LayoutRegion`]s, so
-//! this backend keeps the words — the finest granularity the service
-//! reports, and the only level carrying a confidence — and discards
-//! the groupings above them. Per-call correlation IDs propagate as
-//! `x-request-id` headers when set.
+//! this backend emits at the deepest level with content — words where
+//! they exist, and the block or line itself where its children are
+//! empty, which the contract permits. Per-call correlation IDs
+//! propagate as `x-request-id` headers when set.
 //!
 //! Wire types live in the private `request` (outgoing) and
 //! `response` (incoming) submodules; only the public

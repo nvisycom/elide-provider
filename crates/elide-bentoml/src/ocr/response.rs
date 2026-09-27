@@ -40,21 +40,21 @@ pub(super) struct WirePage {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct WireBlock {
+    pub text: String,
+    pub bbox: WireBoundingBox,
     #[serde(default)]
     pub lines: Vec<WireLine>,
-    // `text`, `bbox` and `kind` (text / table / figure / other) are
-    // deserialised-and-discarded: `Layout` is a flat list of regions, so
-    // the block is a grouping the wire has and elide does not. Its words
-    // carry the geometry and the confidence that survive.
+    // `kind` (text / table / figure / other) ignored: `LayoutRegion` does
+    // not model a layout kind.
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct WireLine {
+    pub text: String,
+    pub bbox: WireBoundingBox,
     #[serde(default)]
     pub words: Vec<WireWord>,
-    // Per-line text and bbox are discarded for the same reason as the
-    // block's: the words beneath carry both.
 }
 
 #[derive(Debug, Deserialize)]
@@ -90,40 +90,172 @@ impl WireOcrResponse {
     /// Translate into the elide [`OcrResponse`] the backend trait expects.
     ///
     /// [`Layout`] is a flat list of regions, so the wire's
-    /// pages → blocks → lines → words nesting collapses into one. Words
-    /// are what survive: they are the finest granularity the service
-    /// reports, and the only level carrying a confidence, which a
-    /// redaction pipeline needs per span rather than per paragraph.
+    /// pages → blocks → lines → words nesting collapses into one.
+    ///
+    /// Emits at the deepest level that has content: words where they
+    /// exist, since they are the finest granularity the service reports
+    /// and the only level carrying a confidence, which a redaction
+    /// pipeline wants per span rather than per paragraph. A block or line
+    /// whose children are empty is emitted itself — the contract defaults
+    /// both `lines` and `words` to empty while requiring `text`, so a
+    /// conforming service can report text with no words, and discarding
+    /// it would lose recognised content.
     ///
     /// [`Layout`]: elide_image::modality::Layout
     pub(super) fn decode(self) -> OcrResponse {
-        let regions = self
-            .pages
-            .into_iter()
-            .flat_map(|page| {
-                let page_number = page.page_number;
-                page.blocks
-                    .into_iter()
-                    .flat_map(|block| block.lines)
-                    .flat_map(|line| line.words)
-                    .map(move |word| word.decode(page_number))
-            })
-            .collect();
+        let mut regions = Vec::new();
+        for page in self.pages {
+            let page_number = page.page_number;
+            for block in page.blocks {
+                // Descend as far as the response actually goes, and emit at
+                // the deepest level that has content. A block or line may
+                // carry text with no children — the contract defaults both
+                // `lines` and `words` to empty — and dropping it would lose
+                // recognised text a redaction pipeline has to see.
+                if block.lines.is_empty() {
+                    regions.push(region(block.bbox, block.text, None, page_number));
+                    continue;
+                }
+                for line in block.lines {
+                    if line.words.is_empty() {
+                        regions.push(region(line.bbox, line.text, None, page_number));
+                        continue;
+                    }
+                    for word in line.words {
+                        regions.push(region(word.bbox, word.text, word.confidence, page_number));
+                    }
+                }
+            }
+        }
         OcrResponse::new(regions)
     }
 }
 
-impl WireWord {
-    fn decode(self, page_number: Option<u32>) -> LayoutRegion {
-        let region = ImageLocation {
-            bounding_box: self.bbox.into(),
-            polygon: None,
-            page: page_number,
-        };
-        let mut layout = LayoutRegion::new(region, self.text);
-        if let Some(c) = self.confidence {
-            layout = layout.with_confidence(Confidence::clamped(c));
+/// One region from a wire bbox, its text, and an optional confidence.
+fn region(
+    bbox: WireBoundingBox,
+    text: String,
+    confidence: Option<f32>,
+    page_number: Option<u32>,
+) -> LayoutRegion {
+    let location = ImageLocation {
+        bounding_box: bbox.into(),
+        polygon: None,
+        page: page_number,
+    };
+    let layout = LayoutRegion::new(location, text);
+    match confidence {
+        Some(c) => layout.with_confidence(Confidence::clamped(c)),
+        None => layout,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bbox() -> WireBoundingBox {
+        WireBoundingBox {
+            x: 0.0,
+            y: 0.0,
+            width: 10.0,
+            height: 4.0,
         }
-        layout
+    }
+
+    fn word(text: &str, confidence: Option<f32>) -> WireWord {
+        WireWord {
+            text: text.to_owned(),
+            confidence,
+            bbox: bbox(),
+        }
+    }
+
+    fn response(blocks: Vec<WireBlock>, page_number: Option<u32>) -> OcrResponse {
+        WireOcrResponse {
+            pages: vec![WirePage {
+                page_number,
+                blocks,
+            }],
+        }
+        .decode()
+    }
+
+    /// Words are what a populated response emits, and they carry the
+    /// confidence the coarser levels have none of.
+    #[test]
+    fn emits_words_when_present() {
+        let regions = response(
+            vec![WireBlock {
+                text: "hello world".to_owned(),
+                bbox: bbox(),
+                lines: vec![WireLine {
+                    text: "hello world".to_owned(),
+                    bbox: bbox(),
+                    words: vec![word("hello", Some(0.9)), word("world", Some(0.8))],
+                }],
+            }],
+            Some(1),
+        )
+        .regions;
+
+        assert_eq!(regions.len(), 2);
+        assert_eq!(regions[0].text, "hello");
+        assert!(regions[0].confidence.is_some());
+    }
+
+    /// A line with text but no words is emitted itself: the contract
+    /// requires `text` while defaulting `words` to empty, so discarding it
+    /// would lose recognised content.
+    #[test]
+    fn falls_back_to_the_line_when_it_has_no_words() {
+        let regions = response(
+            vec![WireBlock {
+                text: "a line".to_owned(),
+                bbox: bbox(),
+                lines: vec![WireLine {
+                    text: "a line".to_owned(),
+                    bbox: bbox(),
+                    words: Vec::new(),
+                }],
+            }],
+            Some(1),
+        )
+        .regions;
+
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].text, "a line");
+        // Only words carry a confidence, so a fallback region has none
+        // rather than inheriting a number nobody reported.
+        assert!(regions[0].confidence.is_none());
+    }
+
+    /// Same for a block whose `lines` is empty.
+    #[test]
+    fn falls_back_to_the_block_when_it_has_no_lines() {
+        let regions = response(
+            vec![WireBlock {
+                text: "a block".to_owned(),
+                bbox: bbox(),
+                lines: Vec::new(),
+            }],
+            Some(2),
+        )
+        .regions;
+
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].text, "a block");
+        assert_eq!(regions[0].region.page, Some(2));
+    }
+
+    /// No pages decodes to no regions rather than failing.
+    #[test]
+    fn empty_response_decodes_to_no_regions() {
+        assert!(
+            WireOcrResponse { pages: Vec::new() }
+                .decode()
+                .regions
+                .is_empty()
+        );
     }
 }
