@@ -19,11 +19,20 @@ pub(crate) enum DocumentAiBackendError {
 }
 
 impl From<DocumentAiBackendError> for Error {
-    /// A call that never reached the service maps onto
-    /// [`ErrorKind::Transport`]; anything the service answered, onto
-    /// [`ErrorKind::Provider`].
+    /// [`ErrorKind::Transport`] for a call that failed before the service
+    /// answered and may be worth retrying; [`ErrorKind::Provider`] for
+    /// anything the service answered, and for the client-side failures
+    /// that would repeat.
     fn from(err: DocumentAiBackendError) -> Self {
         let kind = match &err {
+            // Encoding the request or decoding its reply failed. Neither
+            // got an answer, but neither is worth another attempt: the same
+            // request would fail the same way.
+            DocumentAiBackendError::Sdk(sdk)
+                if sdk.is_serialization() || sdk.is_deserialization() =>
+            {
+                ErrorKind::Provider
+            }
             // A rejected document is the service answering, and retrying it
             // would fail the same way. Anything else — a timeout, a failure
             // to connect, a proxy answering in the service's place — never
@@ -32,8 +41,8 @@ impl From<DocumentAiBackendError> for Error {
             // `status()` is the test because it is `Some` only for an RPC
             // status the service itself returned. Enumerating the transport
             // shapes instead would miss the ones gax models as a transport
-            // error carrying an HTTP status, and its `is_transport` sits
-            // outside the crate's public semver surface.
+            // error carrying an HTTP status, and most of its `is_*`
+            // predicates sit outside the crate's public semver surface.
             DocumentAiBackendError::Sdk(sdk) if sdk.status().is_none() => ErrorKind::Transport,
             DocumentAiBackendError::Sdk(_) | DocumentAiBackendError::Protocol(_) => {
                 ErrorKind::Provider
