@@ -48,9 +48,17 @@ Speech-to-text, so audio reaches the same detection pipeline as text.
 **[elide-bentoml](crates/elide-bentoml)**  
 The Rust client for the services above, feature-gated per backend (`ner`, `ocr`, `stt`).
 
+**[elide-aws-textract](crates/elide-aws-textract)**  
+An AWS Textract-backed OCR backend, for hosted document text detection instead
+of self-hosted docTR.
+
 **[elide-deepgram](crates/elide-deepgram)**  
 A Deepgram-backed speech-to-text backend, for hosted transcription instead of
 self-hosted Whisper.
+
+**[elide-google-document-ai](crates/elide-google-document-ai)**  
+A Google Cloud Document AI-backed OCR backend, the other hosted alternative to
+`bento-doctr`.
 
 **[elide-pioneer-gliner](crates/elide-pioneer-gliner)**  
 A Pioneer-backed NER backend, running the same GLiNER2 model family as

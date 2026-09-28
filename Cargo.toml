@@ -5,6 +5,7 @@ resolver = "3"
 members = [
     "./crates/elide-bentoml",
     "./crates/elide-deepgram",
+    "./crates/elide-aws-textract",
     "./crates/elide-google-document-ai",
     "./crates/elide-pioneer-gliner",
 ]
@@ -60,6 +61,10 @@ bentoml = { version = "0.5", default-features = false, features = ["rustls-tls",
 
 # Hosted providers reached directly, with no BentoML service in front.
 deepgram = { version = "0.11", default-features = false, features = ["listen"] }
+# The SDKs' `rustls` feature selects their *legacy* connector, which pins
+# rustls 0.21 and h2 0.3; `default-https-client` is the maintained one.
+aws-config = { version = "1", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio", "credentials-process", "sso"] }
+aws-sdk-textract = { version = "1.113", default-features = false, features = ["behavior-version-latest", "default-https-client", "rt-tokio"] }
 google-cloud-documentai-v1 = { version = "1.16", default-features = false }
 
 # HTTP client for providers with no Rust SDK.
