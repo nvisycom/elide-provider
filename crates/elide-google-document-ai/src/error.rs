@@ -24,15 +24,17 @@ impl From<DocumentAiBackendError> for Error {
     /// [`ErrorKind::Provider`].
     fn from(err: DocumentAiBackendError) -> Self {
         let kind = match &err {
-            // Timeouts, connect failures and I/O errors happen before any
-            // answer, so the request may be safe to retry. A rejected
-            // document is the service answering, and retrying it would
-            // fail the same way.
-            DocumentAiBackendError::Sdk(sdk)
-                if sdk.is_timeout() || sdk.is_connect() || sdk.is_io() =>
-            {
-                ErrorKind::Transport
-            }
+            // A rejected document is the service answering, and retrying it
+            // would fail the same way. Anything else — a timeout, a failure
+            // to connect, a proxy answering in the service's place — never
+            // got that far, so the request may be safe to retry.
+            //
+            // `status()` is the test because it is `Some` only for an RPC
+            // status the service itself returned. Enumerating the transport
+            // shapes instead would miss the ones gax models as a transport
+            // error carrying an HTTP status, and its `is_transport` sits
+            // outside the crate's public semver surface.
+            DocumentAiBackendError::Sdk(sdk) if sdk.status().is_none() => ErrorKind::Transport,
             DocumentAiBackendError::Sdk(_) | DocumentAiBackendError::Protocol(_) => {
                 ErrorKind::Provider
             }
