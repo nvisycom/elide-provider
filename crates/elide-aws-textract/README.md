@@ -53,10 +53,12 @@ first. Out of the box, AWS may:
 - store that content outside the AWS region the request was made in
 
 Both are opt-out, and the opt-out is an **AWS Organizations AI services
-policy** applied at the organization root — not a per-request flag, not a
-console checkbox on the account using the API. Treat it as day-one work
-that happens before the first production page, and verify it applies to
-the account actually making these calls.
+policy** — not a per-request flag, not a console checkbox on the account
+using the API. It attaches at the organization root, an organizational
+unit, or an individual account, and the effective policy is what those
+combine to. Treat it as day-one work that happens before the first
+production page, and verify the effective policy for the account actually
+making these calls.
 
 The service is HIPAA-eligible under the AWS BAA, and supports VPC
 endpoints (AWS PrivateLink) to keep requests off the public internet.

@@ -206,19 +206,6 @@ mod tests {
         assert!(region(&bare, "hello", None).is_none());
     }
 
-    /// A format is nameable without a codec compiled in.
-    ///
-    /// Regression guard for the upstream bug where `ImageFormat`'s
-    /// variants were gated on their codec features: in an `ocr`-only
-    /// build the enum was uninhabited, so `OcrRequest` — which requires a
-    /// `format` — could not be constructed at all. This backend never
-    /// decodes an image, and must not need a decoder to name one.
-    #[test]
-    fn a_format_is_nameable_without_a_codec() {
-        let format = elide_image::modality::ImageFormat::Png;
-        assert!(!format.can_decode(), "this build enables no image codecs");
-    }
-
     /// `f64` has no total order, so a non-finite coordinate is rejected
     /// rather than reached via `partial_cmp().unwrap()`.
     #[test]

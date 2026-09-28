@@ -37,6 +37,12 @@ impl TextractOcr {
     /// SDK is re-exported as [`textract`], so a caller configuring one
     /// does not need to depend on it separately.
     ///
+    /// Give it a bounded operation timeout: the SDK leaves both the
+    /// operation and per-attempt timeouts unset, and [`recognize`] is a
+    /// single `await` with no deadline of its own.
+    ///
+    /// [`recognize`]: OcrBackend::recognize
+    ///
     /// [`textract`]: crate::textract
     #[must_use]
     pub fn new(client: Client) -> Self {
@@ -69,7 +75,7 @@ impl OcrBackend for TextractOcr {
             .document(document)
             .send()
             .await
-            .map_err(|err| TextractError::Sdk(err.to_string()))?;
+            .map_err(|err| TextractError::from_sdk(&err))?;
 
         let blocks = response
             .blocks

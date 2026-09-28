@@ -19,14 +19,20 @@ pub(crate) enum DocumentAiBackendError {
 }
 
 impl From<DocumentAiBackendError> for Error {
-    /// Anything the transport did maps onto [`ErrorKind::Transport`];
-    /// anything the service answered onto [`ErrorKind::Provider`].
+    /// A call that never reached the service maps onto
+    /// [`ErrorKind::Transport`]; anything the service answered, onto
+    /// [`ErrorKind::Provider`].
     fn from(err: DocumentAiBackendError) -> Self {
         let kind = match &err {
-            // The gax error type does not expose a stable transport/service
-            // discriminant, so a failed call is attributed to the provider:
-            // over-reporting Transport would make a rejected request look
-            // retryable when it is not.
+            // Timeouts, connect failures and I/O errors happen before any
+            // answer, so the request may be safe to retry. A rejected
+            // document is the service answering, and retrying it would
+            // fail the same way.
+            DocumentAiBackendError::Sdk(sdk)
+                if sdk.is_timeout() || sdk.is_connect() || sdk.is_io() =>
+            {
+                ErrorKind::Transport
+            }
             DocumentAiBackendError::Sdk(_) | DocumentAiBackendError::Protocol(_) => {
                 ErrorKind::Provider
             }

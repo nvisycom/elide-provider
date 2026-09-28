@@ -50,7 +50,8 @@ pipeline is the un-redacted original. `bento-doctr` runs locally with no
 egress.
 
 Google's terms are the best-documented of the hosted OCR providers, and
-they are the reason this backend exists rather than an AWS one:
+they are why this is the one to reach for first where either fits
+([`elide-aws-textract`](../elide-aws-textract) is the other):
 
 - online processing is *"processed in memory ... not persisted to disk"*
 - *"we never use customer data to train our Document AI models"*

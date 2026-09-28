@@ -33,22 +33,6 @@ impl DocumentAiOcr {
     }
 }
 
-/// The MIME type to declare for the request.
-///
-/// Always `application/octet-stream`, which leaves Document AI to sniff
-/// the bytes — it does so when the type is generic.
-///
-/// [`ImageFormat`] would be the better source, but its variants are
-/// feature-gated on `elide-image` for the formats that crate can *decode*,
-/// and this backend decodes nothing, so it enables none of them and the
-/// enum is empty here. Wiring the hint through would mean pulling an image
-/// codec to name a MIME type.
-///
-/// [`ImageFormat`]: elide_image::modality::ImageFormat
-const fn mime_type() -> &'static str {
-    "application/octet-stream"
-}
-
 #[async_trait]
 impl OcrBackend for DocumentAiOcr {
     fn provenance(&self) -> ModelEvent {
@@ -60,11 +44,13 @@ impl OcrBackend for DocumentAiOcr {
     }
 
     async fn recognize(&self, request: OcrRequest<'_>) -> Result<OcrResponse> {
-        // Document AI dispatches on the MIME type, and sniffs the bytes
-        // when given the generic one; see `mime_type`.
+        // Document AI dispatches on the MIME type and answers
+        // `INVALID_ARGUMENT` for one outside its supported list, so the
+        // format the caller resolved at ingestion is named explicitly
+        // rather than left to be sniffed.
         let raw = RawDocument::new()
             .set_content(request.image.to_vec())
-            .set_mime_type(mime_type());
+            .set_mime_type(request.format.mime_type());
 
         let response = self
             .client
