@@ -1,4 +1,4 @@
-//! [`BentoOcr`]: an [`OcrBackend`] backed by the
+//! [`BentoOcr`]: a [`Backend`] backed by the
 //! `bento-doctr` BentoML service.
 //!
 //! Wire contract: `POST /recognize` accepts a batched list of
@@ -15,7 +15,7 @@
 //! `response` (incoming) submodules; only the public
 //! [`BentoOcr`] backend is part of this crate's API.
 //!
-//! [`OcrBackend`]: elide_image::ocr::OcrBackend
+//! [`Backend`]: elide_core::backend::Backend
 //! [`Layout`]: elide_image::modality::Layout
 //! [`LayoutRegion`]: elide_image::modality::LayoutRegion
 
@@ -24,8 +24,9 @@ mod response;
 
 use bentoml::{Client, Endpoint};
 use elide_core::Result;
+use elide_core::backend::Backend;
 use elide_core::entity::audit::ModelEvent;
-use elide_image::ocr::{OcrBackend, OcrRequest, OcrResponse};
+use elide_image::ocr::{OcrRequest, OcrResponse};
 use hipstr::HipStr;
 
 use self::request::WireOcrRequest;
@@ -38,7 +39,7 @@ const ROUTE: &str = "recognize";
 ///
 /// Owns a cached [`Endpoint`] pointing at the `bento-doctr`
 /// `/recognize` route, plus the per-deployment model id (echoed
-/// into [`OcrBackend::provenance`]) and a default per-word
+/// into [`Backend::provenance`]) and a default per-word
 /// confidence threshold (the service drops anything weaker before
 /// returning).
 #[derive(Debug, Clone)]
@@ -55,6 +56,38 @@ pub struct BentoOcr {
 }
 
 impl BentoOcr {
+    /// Call the service with several requests in one round trip.
+    ///
+    /// The BentoML service batches natively, so a caller with more than
+    /// one image should prefer this over repeated
+    /// [`call`](elide_core::backend::Backend::call): the requests share a
+    /// single HTTP request and the model's own batching.
+    ///
+    /// Responses come back in request order. An empty slice makes no call.
+    ///
+    /// # Errors
+    ///
+    /// The transport error, or a protocol error if the service answers
+    /// with a different number of responses than it was asked for.
+    pub async fn recognize_batch(&self, requests: &[OcrRequest<'_>]) -> Result<Vec<OcrResponse>> {
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+        let responses = self.post_recognize(requests).await?;
+        if responses.len() != requests.len() {
+            return Err(BentoError::Protocol(format!(
+                "bento ocr returned {} responses for {} requests",
+                responses.len(),
+                requests.len(),
+            ))
+            .into());
+        }
+        Ok(responses)
+    }
+
     /// Build from a service URL + the deployment's model id.
     /// Default per-word confidence threshold is `0.0` (no
     /// filtering, matches the service's own default); use
@@ -107,7 +140,10 @@ impl BentoOcr {
 }
 
 #[async_trait::async_trait]
-impl OcrBackend for BentoOcr {
+impl Backend for BentoOcr {
+    type Request<'a> = OcrRequest<'a>;
+    type Response = OcrResponse;
+
     fn provenance(&self) -> ModelEvent {
         ModelEvent {
             name: self.model_id.clone(),
@@ -116,26 +152,10 @@ impl OcrBackend for BentoOcr {
         }
     }
 
-    async fn recognize(&self, request: OcrRequest<'_>) -> Result<OcrResponse> {
+    async fn call(&self, request: OcrRequest<'_>) -> Result<OcrResponse> {
         let mut responses = self.recognize_batch(&[request]).await?;
         responses
             .pop()
             .ok_or_else(|| BentoError::Protocol("bento ocr returned an empty batch".into()).into())
-    }
-
-    async fn recognize_batch(&self, requests: &[OcrRequest<'_>]) -> Result<Vec<OcrResponse>> {
-        if requests.is_empty() {
-            return Ok(Vec::new());
-        }
-        let responses = self.post_recognize(requests).await?;
-        if responses.len() != requests.len() {
-            return Err(BentoError::Protocol(format!(
-                "bento ocr returned {} responses for {} requests",
-                responses.len(),
-                requests.len(),
-            ))
-            .into());
-        }
-        Ok(responses)
     }
 }

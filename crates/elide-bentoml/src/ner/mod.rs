@@ -1,4 +1,4 @@
-//! [`BentoNer`]: an [`NerBackend`] backed by the
+//! [`BentoNer`]: a [`Backend`] backed by the
 //! `bento-gliner2` BentoML service.
 //!
 //! Wire contract: `POST /recognize` accepts a batched list of
@@ -12,15 +12,16 @@
 //! `response` (incoming) submodules; only the public
 //! [`BentoNer`] backend is part of this crate's API.
 //!
-//! [`NerBackend`]: elide_ner::backend::NerBackend
+//! [`Backend`]: elide_core::backend::Backend
 
 mod request;
 mod response;
 
 use bentoml::{Client, Endpoint};
 use elide_core::Result;
+use elide_core::backend::Backend;
 use elide_core::entity::audit::ModelEvent;
-use elide_ner::backend::{NerBackend, NerRequest, NerResponse};
+use elide_ner::backend::{NerRequest, NerResponse};
 use hipstr::HipStr;
 
 use self::request::WireNerRequest;
@@ -33,7 +34,7 @@ const ROUTE: &str = "recognize";
 ///
 /// Owns a cached [`Endpoint`] pointing at the `bento-gliner2`
 /// `/recognize` route, plus the per-deployment model id (echoed
-/// into [`NerBackend::provenance`]) and a default per-label
+/// into [`Backend::provenance`]) and a default per-label
 /// confidence threshold the service applies when a schema entry
 /// does not pin its own.
 #[derive(Debug, Clone)]
@@ -50,6 +51,38 @@ pub struct BentoNer {
 }
 
 impl BentoNer {
+    /// Call the service with several requests in one round trip.
+    ///
+    /// The BentoML service batches natively, so a caller with more than
+    /// one text should prefer this over repeated
+    /// [`call`](elide_core::backend::Backend::call): the requests share a
+    /// single HTTP request and the model's own batching.
+    ///
+    /// Responses come back in request order. An empty slice makes no call.
+    ///
+    /// # Errors
+    ///
+    /// The transport error, or a protocol error if the service answers
+    /// with a different number of responses than it was asked for.
+    pub async fn recognize_batch(&self, requests: &[NerRequest<'_>]) -> Result<Vec<NerResponse>> {
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+        let responses = self.post_recognize(requests).await?;
+        if responses.len() != requests.len() {
+            return Err(BentoError::Protocol(format!(
+                "bento ner returned {} responses for {} requests",
+                responses.len(),
+                requests.len(),
+            ))
+            .into());
+        }
+        Ok(responses)
+    }
+
     /// Build from a service URL + the deployment's model id. The
     /// default per-label threshold starts at `0.5` (matches the
     /// service's own default); use [`with_default_threshold`] to
@@ -103,7 +136,10 @@ impl BentoNer {
 }
 
 #[async_trait::async_trait]
-impl NerBackend for BentoNer {
+impl Backend for BentoNer {
+    type Request<'a> = NerRequest<'a>;
+    type Response = NerResponse;
+
     fn provenance(&self) -> ModelEvent {
         ModelEvent {
             name: self.model_id.clone(),
@@ -112,26 +148,10 @@ impl NerBackend for BentoNer {
         }
     }
 
-    async fn recognize(&self, request: NerRequest<'_>) -> Result<NerResponse> {
+    async fn call(&self, request: NerRequest<'_>) -> Result<NerResponse> {
         let mut responses = self.recognize_batch(&[request]).await?;
         responses
             .pop()
             .ok_or_else(|| BentoError::Protocol("bento ner returned an empty batch".into()).into())
-    }
-
-    async fn recognize_batch(&self, requests: &[NerRequest<'_>]) -> Result<Vec<NerResponse>> {
-        if requests.is_empty() {
-            return Ok(Vec::new());
-        }
-        let responses = self.post_recognize(requests).await?;
-        if responses.len() != requests.len() {
-            return Err(BentoError::Protocol(format!(
-                "bento ner returned {} responses for {} requests",
-                responses.len(),
-                requests.len(),
-            ))
-            .into());
-        }
-        Ok(responses)
     }
 }

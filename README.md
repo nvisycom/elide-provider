@@ -19,7 +19,7 @@ A workspace pairing BentoML-hosted Python model services with Rust client
 crates that speak their wire contract. Any
 [Elide](https://github.com/nvisycom/elide) consumer, including the
 [Elide Runtime](https://github.com/nvisycom/elide-runtime) engine, drops these
-in as its `NerBackend`, `OcrBackend`, or `SttBackend` implementation. The
+in as its `Backend` implementation. The
 Python side ships as Docker containers deployed as sidecars; the Rust side is
 a library crate the consumer embeds directly.
 

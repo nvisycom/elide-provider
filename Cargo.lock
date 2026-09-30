@@ -1027,11 +1027,10 @@ checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
 [[package]]
 name = "elide-audio"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#5a549e00109b3ddaeaf87923537630ed872eaf8b"
+source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
 dependencies = [
  "async-trait",
  "bytes",
- "derive_builder",
  "elide-core",
  "hipstr",
  "uuid",
@@ -1070,7 +1069,7 @@ dependencies = [
 [[package]]
 name = "elide-core"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#5a549e00109b3ddaeaf87923537630ed872eaf8b"
+source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
 dependencies = [
  "async-trait",
  "blake3",
@@ -1111,11 +1110,10 @@ dependencies = [
 [[package]]
 name = "elide-image"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#5a549e00109b3ddaeaf87923537630ed872eaf8b"
+source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
 dependencies = [
  "async-trait",
  "bytes",
- "derive_builder",
  "elide-core",
  "hipstr",
  "image",
@@ -1126,10 +1124,9 @@ dependencies = [
 [[package]]
 name = "elide-ner"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#5a549e00109b3ddaeaf87923537630ed872eaf8b"
+source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
 dependencies = [
  "async-trait",
- "derive_builder",
  "elide-core",
  "hipstr",
  "serde",
