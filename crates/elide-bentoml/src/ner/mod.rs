@@ -117,14 +117,15 @@ impl Backend for BentoNer {
     }
 
     async fn call(&self, request: NerRequest<'_>) -> Result<NerResponse> {
-        // Straight to the POST rather than through `call_batch`: a
-        // one-element batch would come back as a `Vec` to unwrap, and the
-        // service is just as happy with a single-element body.
-        let response = self
-            .post_recognize(&[request])
-            .await?
-            .pop()
-            .ok_or_else(|| BentoError::Protocol("bento ner returned no response".into()))?;
+        // One request in, so exactly one response out. `pop` alone would
+        // take the last of a longer list and hide the contract violation.
+        let responses = self.post_recognize(&[request]).await?;
+        let [response] = <[NerResponse; 1]>::try_from(responses).map_err(|responses| {
+            BentoError::Protocol(format!(
+                "bento ner returned {} responses for 1 request",
+                responses.len(),
+            ))
+        })?;
         Ok(response)
     }
 
