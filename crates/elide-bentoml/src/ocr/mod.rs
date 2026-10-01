@@ -56,38 +56,6 @@ pub struct BentoOcr {
 }
 
 impl BentoOcr {
-    /// Call the service with several requests in one round trip.
-    ///
-    /// The BentoML service batches natively, so a caller with more than
-    /// one image should prefer this over repeated
-    /// [`call`](elide_core::backend::Backend::call): the requests share a
-    /// single HTTP request and the model's own batching.
-    ///
-    /// Responses come back in request order. An empty slice makes no call.
-    ///
-    /// # Errors
-    ///
-    /// The transport error, or a protocol error if the service answers
-    /// with a different number of responses than it was asked for.
-    pub async fn recognize_batch(&self, requests: &[OcrRequest<'_>]) -> Result<Vec<OcrResponse>> {
-        if requests.is_empty() {
-            return Ok(Vec::new());
-        }
-        if requests.is_empty() {
-            return Ok(Vec::new());
-        }
-        let responses = self.post_recognize(requests).await?;
-        if responses.len() != requests.len() {
-            return Err(BentoError::Protocol(format!(
-                "bento ocr returned {} responses for {} requests",
-                responses.len(),
-                requests.len(),
-            ))
-            .into());
-        }
-        Ok(responses)
-    }
-
     /// Build from a service URL + the deployment's model id.
     /// Default per-word confidence threshold is `0.0` (no
     /// filtering, matches the service's own default); use
@@ -153,9 +121,35 @@ impl Backend for BentoOcr {
     }
 
     async fn call(&self, request: OcrRequest<'_>) -> Result<OcrResponse> {
-        let mut responses = self.recognize_batch(&[request]).await?;
-        responses
+        // Straight to the POST rather than through `call_batch`: a
+        // one-element batch would come back as a `Vec` to unwrap, and the
+        // service is just as happy with a single-element body.
+        let response = self
+            .post_recognize(&[request])
+            .await?
             .pop()
-            .ok_or_else(|| BentoError::Protocol("bento ocr returned an empty batch".into()).into())
+            .ok_or_else(|| BentoError::Protocol("bento ocr returned no response".into()))?;
+        Ok(response)
+    }
+
+    /// Overridden: the `bento-doctr` service takes a batch in one POST, so the
+    /// whole slice goes in a single round trip rather than the default's
+    /// sequential fan-out over [`call`](Self::call).
+    ///
+    /// Responses come back in request order. An empty batch makes no call.
+    async fn call_batch(&self, requests: Vec<OcrRequest<'_>>) -> Result<Vec<OcrResponse>> {
+        if requests.is_empty() {
+            return Ok(Vec::new());
+        }
+        let responses = self.post_recognize(&requests).await?;
+        if responses.len() != requests.len() {
+            return Err(BentoError::Protocol(format!(
+                "bento ocr returned {} responses for {} requests",
+                responses.len(),
+                requests.len(),
+            ))
+            .into());
+        }
+        Ok(responses)
     }
 }

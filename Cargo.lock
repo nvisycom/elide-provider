@@ -1027,7 +1027,7 @@ checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
 [[package]]
 name = "elide-audio"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
+source = "git+https://github.com/nvisycom/elide?branch=main#a6635c4740c7699939549c8937cd41932e1ee5d3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1069,7 +1069,7 @@ dependencies = [
 [[package]]
 name = "elide-core"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
+source = "git+https://github.com/nvisycom/elide?branch=main#a6635c4740c7699939549c8937cd41932e1ee5d3"
 dependencies = [
  "async-trait",
  "blake3",
@@ -1110,7 +1110,7 @@ dependencies = [
 [[package]]
 name = "elide-image"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
+source = "git+https://github.com/nvisycom/elide?branch=main#a6635c4740c7699939549c8937cd41932e1ee5d3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1124,7 +1124,7 @@ dependencies = [
 [[package]]
 name = "elide-ner"
 version = "0.1.0"
-source = "git+https://github.com/nvisycom/elide?branch=main#c65385b86018815b46a81d39cd5a5909b9c7bbfd"
+source = "git+https://github.com/nvisycom/elide?branch=main#a6635c4740c7699939549c8937cd41932e1ee5d3"
 dependencies = [
  "async-trait",
  "elide-core",
@@ -4533,9 +4533,9 @@ dependencies = [
 
 [[package]]
 name = "yoke-derive"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33811428bee40dbceb6d545e95754741d17a6aef9a4849f0fd62e2ba4f412a78"
+checksum = "ec8ebde2db3681e8c9980cc27822030e68752690ddfa9473e739aeb4dbde6d71"
 dependencies = [
  "proc-macro2",
  "quote",
